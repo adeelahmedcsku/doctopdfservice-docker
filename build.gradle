@@ -1,0 +1,84 @@
+plugins {
+    id "application"
+    id 'org.springframework.boot' version '3.1.0' // Updated to a version compatible with Java 17
+    id 'io.spring.dependency-management' version '1.1.0' // Updated to the latest version
+    id 'java'
+    id 'maven-publish'
+}
+
+application {
+    mainClassName = "com.wwv.DoctopdfserviceApplication"
+}
+
+group = 'com.wwv.doctopdfservice'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = '17' // Set Java version to 17
+    targetCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/releases/" // Add Sonatype repository
+    }
+    maven {
+        url "https://www.docx4java.org/maven2" // docx4j repository
+    }
+
+}
+
+ext {
+    docx4jVersion = '11.5.2'
+}
+
+dependencies {
+    // Spring Boot Starter Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // docx4j core and FO exporter
+    //implementation group: 'org.docx4j', name: 'docx4j-core', version: '11.5.2'
+    implementation group: 'org.docx4j', name: 'docx4j-export-fo', version: '11.5.2'
+
+    // Commons IO (optional, for file operations)
+  //  implementation 'commons-io:commons-io:2.11.0' // Update to a newer version
+    implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.2'
+    // JAXB Runtime (required for docx4j)
+
+    // JAXB RI Extensions (required for NamespacePrefixMapper)
+    implementation 'org.glassfish.jaxb:jaxb-core:4.0.2'
+    implementation group: 'org.docx4j', name: 'docx4j-JAXB-ReferenceImpl', version: '11.5.2'
+    implementation 'org.apache.pdfbox:pdfbox:2.0.27' // Required for PDF conversion
+    implementation 'org.apache.xmlgraphics:fop:2.9' // Required for FO processing
+    // Spring Boot Starter Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.withType(Jar).configureEach {
+    manifest {
+        attributes 'Main-Class': 'com.wwv.DoctopdfserviceApplication'
+    }
+}
+
+tasks.bootJar {
+    mainClass = 'com.wwv.DoctopdfserviceApplication'
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url = uri("${buildDir}/repos")
+        }
+        maven {
+            url "https://www.docx4java.org/maven2"
+        }
+//        mavenCentral().content {
+//            excludeModule("javax.media", "jai_core")
+//        }
+        maven { url 'https://maven.geotoolkit.org' }
+    }
+}

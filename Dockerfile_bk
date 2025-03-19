@@ -1,0 +1,41 @@
+# Use a multi-stage build
+
+# Stage 1: Build the JAR inside Docker
+FROM gradle:8.5-jdk17 AS builder
+
+WORKDIR /app
+
+# Set the correct JAVA_HOME (specific to this Gradle image)
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Configure Gradle to use this Java version
+RUN echo "org.gradle.java.home=$JAVA_HOME" >> /root/.gradle/gradle.properties
+
+# Copy Gradle wrapper and project files
+COPY gradle /app/gradle
+COPY gradlew /app/gradlew
+COPY build.gradle /app/build.gradle
+COPY settings.gradle /app/settings.gradle
+COPY src /app/src
+
+# Run Gradle build inside Docker
+RUN gradle clean bootJar --no-daemon
+
+
+# Stage 2: Run the application
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+# Copy built JAR from builder stage
+# Copy the built JAR from the builder stage
+COPY --from=builder /app/build/libs/doctopdfservice-1.0.0.jar /app/doctopdfservice-1.0.0.jar
+# Ensure the JAR is executable
+RUN chmod +x doctopdfservice-1.0.0.jar
+# Expose port 9898
+EXPOSE 9091
+
+# Run the application
+# Run the Spring Boot app using Gradle's bootRun task
+CMD ["gradle", "bootRun"]
